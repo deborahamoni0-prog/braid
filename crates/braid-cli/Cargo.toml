@@ -1,0 +1,17 @@
+[package]
+name = "braid-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "CLI for Braid — parallel-execution conflict analysis for Soroban"
+
+[[bin]]
+name = "braid"
+path = "src/main.rs"
+
+[dependencies]
+braid-core = { path = "../braid-core" }
+clap = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
