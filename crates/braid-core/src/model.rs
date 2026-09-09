@@ -163,6 +163,18 @@ pub struct StorageAccess {
     pub class: KeyClass,
 }
 
+/// One line of source context attached to a finding.
+///
+/// Carried in the report so a viewer — or a reviewer reading the JSON months
+/// later — can see the offending code without the working tree it came from.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SourceLine {
+    pub number: usize,
+    pub text: String,
+    /// True for the line the finding points at.
+    pub hit: bool,
+}
+
 /// A conflict Braid is reporting, with the remediation that goes with it.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Finding {
@@ -175,6 +187,11 @@ pub struct Finding {
     /// Other entry points that touch the same entry, so the reader can see the
     /// blast radius rather than only the site.
     pub also_touched_by: Vec<String>,
+    /// Source lines around the finding. Populated only with `--include-source`,
+    /// because embedding source makes reports much larger and is not always
+    /// wanted in CI artifacts.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub context: Vec<SourceLine>,
 }
 
 /// Two entry points that cannot run in parallel, and why.
@@ -213,6 +230,12 @@ pub struct Report {
     /// evidence that the analyser is discriminating rather than flagging
     /// everything.
     pub parallel_safe_entry_points: Vec<String>,
+    /// Entry points that conflict with *themselves*: two concurrent calls to
+    /// the same function serialise because it writes a shared entry. There is
+    /// no edge to draw for these — the pair is the function and itself — so
+    /// they are listed separately rather than being invisible.
+    #[serde(default)]
+    pub self_conflicting_entry_points: Vec<String>,
 }
 
 impl Report {

@@ -52,6 +52,11 @@ enum Command {
         /// Disable colour even when stdout is a terminal.
         #[arg(long)]
         no_color: bool,
+
+        /// Embed source context in the report, so it stays readable away from
+        /// the working tree it was produced in. Implied by --format html.
+        #[arg(long)]
+        include_source: bool,
     },
 
     /// Print the JSON schema version this build emits.
@@ -92,6 +97,7 @@ fn run(cli: Cli) -> Result<i32> {
             fail_on,
             quiet,
             no_color,
+            include_source,
         } => {
             if !path.exists() {
                 bail!("{} does not exist", path.display());
@@ -108,6 +114,10 @@ fn run(cli: Cli) -> Result<i32> {
 
             for (file, err) in &parse_errors {
                 eprintln!("braid: could not parse {file}: {err}");
+            }
+
+            if include_source || format == Format::Html {
+                braid_core::attach_source(&mut report, 3);
             }
 
             if quiet {

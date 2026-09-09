@@ -116,6 +116,7 @@ pub fn analyze(target: &str, scan: &ScanResult) -> Report {
             summary: summary_of(a),
             remediation: remediation_for(a),
             also_touched_by: also,
+            context: Vec::new(),
             access: a.clone(),
         });
     }
@@ -139,9 +140,10 @@ pub fn analyze(target: &str, scan: &ScanResult) -> Report {
         .iter()
         .flat_map(|e| [e.a.clone(), e.b.clone()])
         .collect();
+    // A single entry point writing a shared entry conflicts with itself: two
+    // concurrent calls land in the same cluster.
     let self_conflicted: BTreeSet<String> = domain_writers
         .values()
-        .filter(|w| w.len() == 1)
         .flat_map(|w| w.iter().cloned())
         .collect();
 
@@ -177,6 +179,7 @@ pub fn analyze(target: &str, scan: &ScanResult) -> Report {
         findings,
         conflict_edges,
         parallel_safe_entry_points: parallel_safe,
+        self_conflicting_entry_points: self_conflicted.into_iter().collect(),
     }
 }
 
